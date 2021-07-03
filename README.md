@@ -3,6 +3,9 @@ Having fun with text analysis on the Brontë sisters' works
 
 Source: https://www.gutenberg.org/
 
+![Bronte Sisters](img/bronte_sisters.jpg)
+*source: Wikipedia*
+
 ## Works by the Brontë sisters available on Project Gutenberg:
 
 Sister|Title|EBook-No
