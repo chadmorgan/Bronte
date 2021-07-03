@@ -3,7 +3,7 @@ Having fun with text analysis on the Brontë sisters' works
 
 Source: https://www.gutenberg.org/
 
-![Bronte Sisters](img/bronte_sisters.jpg)
+<img src="img/bronte_sisters.jpg" width="256">
 *source: Wikipedia*
 
 ## Works by the Brontë sisters available on Project Gutenberg:
