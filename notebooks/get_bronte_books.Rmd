@@ -1,0 +1,148 @@
+---
+title: "Get Brontë works"
+output: 
+  html_document:
+    keep_md: true
+---
+
+Get the major works of the Brontë sisters and pre-process them
+
+I used the following references as guides:
+
+ https://cran.r-project.org/web/packages/gutenbergr/vignettes/intro.html
+https://www.tidytextmining.com
+
+
+```{r}
+library(gutenbergr)
+library(dplyr)
+library(tidytext)
+library(stringr)
+library(ggplot2)
+```
+
+## Use Gutenbergr package to get Brontë sisters' works
+
+
+```{r}
+
+bronte_works <- gutenberg_works(author %in% c("Brontë, Anne","Brontë, Charlotte","Brontë, Emily"))
+
+bronte_works
+```
+
+```{r}
+books <- gutenberg_download(c(768, 1260,969),
+                            meta_fields = c("title","author")
+                            )
+```
+
+```{r}
+table(books$title)
+```
+
+```{r}
+head(books,30)
+```
+
+
+```{r}
+books %>%
+  unnest_tokens(sentence, text, token = "lines") %>%
+    head()
+```
+
+We need to do something else to correctly break this up into sentences
+
+```{r}
+bronte_chapters <- books %>%
+  group_by(title,author) %>%
+  unnest_tokens(chapter, text, token = "regex", 
+                pattern = "Chapter|CHAPTER [\\dIVXLC]") %>%
+  mutate(
+        chapter_number = row_number()
+    ) %>%
+  ungroup() %>%
+  filter(chapter_number > 1) %>%
+  mutate(
+        chapter_number = chapter_number-1
+    )
+
+```
+
+```{r}
+bronte_chapters %>% 
+    group_by(title) %>%
+    summarize(n_chapters=n())
+```
+```{r}
+str(bronte_chapters)
+```
+
+
+```{r}
+bronte_chapters %>%
+    filter(title == 'Jane Eyre: An Autobiography') %>%
+    head()
+```
+
+
+```{r}
+bronte_words <- bronte_chapters %>% 
+    group_by(title,author,chapter_number) %>%
+    unnest_tokens(line, chapter, token = "lines") %>%
+    ungroup() %>%
+    group_by(title) %>%
+    mutate(
+        line_number = row_number()
+    ) %>%
+    ungroup() %>%
+    unnest_tokens(word, line, token = "words")
+
+    
+```
+
+
+```{r}
+bronte_words
+```
+
+```{r}
+write.csv(bronte_words,'../data/bronte_words.csv',quote = FALSE,row.names = FALSE)
+```
+
+
+
+
+See stackoverflow for help with using regex to detect sentences: https://stackoverflow.com/questions/47211643/tokenizing-sentences-with-unnest-tokens-ignoring-abbreviations
+
+```{r}
+# dealing with abbreviated titles
+titles =  c("mr", "dr", "mrs", "ms", "sr", "jr")
+regex = paste(paste0("(?<!\\b(", paste(titles, collapse = "|"), c("))\\.","))\\?","))\\!")),collapse="|")
+
+
+bronte_sentences <- bronte_chapters %>% 
+    group_by(title,author,chapter_number) %>%
+    unnest_tokens(sentence, chapter, token = "regex", pattern = regex) %>%
+    ungroup() %>%
+    group_by(title,author) %>%
+    mutate(
+        sentence_number = row_number(),
+        sentence = str_replace_all(sentence,"[\n]"," ")
+    ) %>%
+    mutate(
+        sentence = str_replace_all(sentence,"“|” ","")
+    ) %>%
+    ungroup()
+    
+```
+
+```{r}
+bronte_sentences %>% head
+```
+
+```{r}
+table(bronte_sentences$title)
+```
+
